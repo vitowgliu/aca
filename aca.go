@@ -8,6 +8,7 @@ import (
 type ACATree struct {
 	root *Node
 	size int //树节点总数
+	seq  int
 }
 
 type Node struct {
@@ -20,24 +21,26 @@ type Node struct {
 	value_list string
 }
 
-var _id int
-
-func newNode() *Node {
+func (a *ACATree) addNode() *Node {
 	defer func() {
-		_id++
+		a.seq++
 	}()
 
 	return &Node{
 		subtree: make(map[rune]*Node),
-		id:      _id,
+		id:      a.seq,
 	}
 }
 
-func NewTree() ACATree {
-	return ACATree{
-		root: newNode(),
+func NewTree(words_list ...string) (tree *ACATree) {
+	tree = &ACATree{}
+	tree = &ACATree{
+		root: tree.addNode(),
 		size: 1,
 	}
+
+	tree.AddKeyWords(words_list...)
+	return
 }
 
 // 建立trie树
@@ -48,7 +51,7 @@ func (a *ACATree) AddKeyWords(words_list ...string) {
 		for i, ch := range word {
 			value_list := pNode.value_list
 			if pNode.subtree[ch] == nil {
-				pNode.subtree[ch] = newNode()
+				pNode.subtree[ch] = a.addNode()
 				a.size += 1
 			}
 
@@ -64,21 +67,27 @@ func (a *ACATree) AddKeyWords(words_list ...string) {
 		}
 	}
 	fmt.Println("Total Nodes =", a.size)
+	a.BuildTree()
 }
 
 // 建里fail表
 func (a *ACATree) BuildTree() {
-	num := a.size
+	if a.size == 1 {
+		// 说明只有一个root节点
+		return
+	}
+
+	child_num := a.size
 	list := make(chan *Node, a.size)
 	list <- a.root
-	num--
+	child_num--
 
 	for pCur := range list {
 		// 广度优先遍历
 		for _, son := range pCur.subtree {
 			list <- son
-			num--
-			if num == 0 {
+			child_num--
+			if child_num == 0 {
 				close(list)
 			}
 		}
@@ -95,7 +104,7 @@ func (a *ACATree) BuildTree() {
 			if fail == nil {
 				son.fail = a.root
 			}
-			// fmt.Printf("son[%d:%s].fail = node[%d:%s]\n", son.id, son.value, son.fail.id, son.fail.value)
+			fmt.Printf("son[%d:%s].fail = node[%d:%s]\n", son.id, son.value, son.fail.id, son.fail.value)
 		}
 	}
 
