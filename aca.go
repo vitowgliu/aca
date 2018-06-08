@@ -34,11 +34,8 @@ func (a *ACATree) addNode() *Node {
 
 func NewTree(words_list ...string) (tree *ACATree) {
 	tree = &ACATree{}
-	tree = &ACATree{
-		root: tree.addNode(),
-		size: 1,
-	}
-
+	tree.size = 1
+	tree.root = tree.addNode()
 	tree.AddKeyWords(words_list...)
 	return
 }
@@ -48,7 +45,8 @@ func (a *ACATree) AddKeyWords(words_list ...string) {
 	for _, word := range words_list {
 		pNode := a.root
 
-		for i, ch := range word {
+		tmp := []rune(word)
+		for i, ch := range tmp {
 			value_list := pNode.value_list
 			if pNode.subtree[ch] == nil {
 				pNode.subtree[ch] = a.addNode()
@@ -59,14 +57,13 @@ func (a *ACATree) AddKeyWords(words_list ...string) {
 
 			pNode.value = string(ch)
 			pNode.value_list = value_list + pNode.value
-
-			if i == len(word)-1 {
+			if i == len(tmp)-1 {
 				pNode.isEnd = true // 单词末节点：设置为可输出状态
-				// fmt.Println(pNode.value_list)
+				fmt.Println(pNode.value_list)
 			}
 		}
 	}
-	fmt.Println("Total Nodes =", a.size)
+	fmt.Println("\nTotal Nodes =", a.size)
 	a.BuildTree()
 }
 
@@ -104,21 +101,21 @@ func (a *ACATree) BuildTree() {
 			if fail == nil {
 				son.fail = a.root
 			}
-			fmt.Printf("son[%d:%s].fail = node[%d:%s]\n", son.id, son.value, son.fail.id, son.fail.value)
+			fmt.Printf("node[%d: %s: %v].fail = node[%d:%s]\n", son.id, son.value, son.isEnd, son.fail.id, son.fail.value)
 		}
 	}
 
 }
 
 // 命中可输出节点
-func (a *ACATree) Hit(word string) bool {
+func (a *ACATree) Hit(content string) bool {
 	pNode := a.root
-	for _, ch := range word {
+	for _, ch := range content {
 		for pNode != nil {
 			if pNode.subtree[ch] != nil {
 				pNode = pNode.subtree[ch]
 				if pNode.isEnd {
-					// fmt.Printf(` word("%s")  `, pNode.value_list)
+					// fmt.Printf(` content("%s")  `, pNode.value_list)
 					return true
 				}
 				break
